@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        #gameWindow {
+            width:80%;
+            height:80%;
+            border: solid black 3px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: grid;
+            grid-template-columns: repeat(5,1fr);
+            grid-template-rows: repeat(6,1fr);
+            place-items: center;
+            visibility: hidden;
+        }
+        progress {
+            accent-color: red;
+            width:100%;
+            height:30px
+        }
+
+        #opponentHealth {
+            grid-column: 2 / span 3;
+            grid-row: 1;
+        }
+        #playerHealth {
+            grid-row: 6;
+            grid-column: 2 / span 3;
+        }
+        .card {
+            text-align: center;
+            align-content: center;
+            width:95%;
+            height:95%;
+        }
+        #opp1 {
+            grid-column: 2;
+            grid-row:2
+        }
+        #opp2 {
+            grid-column: 3;
+            grid-row:2
+        }
+        #opp3 {
+            grid-column: 4;
+            grid-row:2
+        }
+        #oppPlayed {
+            grid-column: 3;
+            grid-row:3;
+            visibility: hidden;
+        }
+        #hnd1 {
+            grid-column: 2;
+            grid-row:5
+        }
+        #hnd2 {
+            grid-column: 3;
+            grid-row:5
+        }
+        #hnd3 {
+            grid-column: 4;
+            grid-row:5
+        }
+        #hndPlayed {
+            grid-column: 3;
+            grid-row: 4;
+            visibility: hidden;
+        }
+        #notouch {
+            width:80%;
+            height:80%;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            visibility: hidden;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPS: Beyond the Triad</title>
+</head>
+<body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io()
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const entries = urlParams.entries();
+        const quer = {};
+        for (entry of entries) {
+            quer[entry[0]] = entry[1];
+        }
+        if (quer.user==undefined){
+            quer.user = ''
+        }
+        socket.emit('auth',quer['user'],(authenticated,playerData,cardLib) => {
+            if(authenticated){
+                console.log('Player Authenticated')
+                //history.replaceState(null, '',window.location.pathname);
+                var data = JSON.parse(playerData)
+                console.log(data)
+                deck = data.deck
+                gold = data.gold
+                cards = data.cards
+                cardData = JSON.parse(cardLib)
+            } else {
+                window.location.replace('/')
+            }
+        })
+
+        
+        //Game Stuff
+        var deck = [[],[],[]]
+        var gold = 0
+        var bank = []
+        var cardData
+        var hand = []
+
+        function gameSearch(){
+            socket.emit('searching',deck)
+            document.getElementById('searchBtn').disabled = true
+        }
+        socket.on('gamestart',(player,opponent)=> {
+            alert('Match started with '+JSON.parse(opponent).name)
+            document.getElementById('gameWindow').style.visibility = 'visible'
+            update(JSON.parse(player),JSON.parse(opponent))
+        })
+        socket.on('moved',(player,opponent) => {
+            update(JSON.parse(player),JSON.parse(opponent))
+        })
+        var chosencard = undefined
+        var pilenum = 0
+        socket.on('playreq',(callback) => {
+            callback(chosencard,pilenum)
+            chosencard = undefined
+        })
+        socket.on('victory',(reason) => {
+            switch (reason){
+                case 'normal':
+                    alert('You win!')
+                    break
+                case 'disconnect':
+                    alert('Your opponent disconnected and forfeit!')
+                    break
+                case 'forfeit':
+                    alert('Your opponent forfeit!')
+                    break
+            }
+        })
+        function update(player,opponent){
+            chosencard = undefined
+            deck = player.deck
+
+            document.getElementById('playerHealth').value = String(player.hp)
+            document.getElementById('opponentHealth').value = String(opponent.hp)
+            if (player.vision == true){
+                document.getElementById('opp1').innerHTML = opponent.deck[0][0]
+                document.getElementById('opp2').innerHTML = opponent.deck[1][0]
+                document.getElementById('opp3').innerHTML = opponent.deck[2][0]
+            } else {
+                document.getElementById('opp1').innerHTML = ''
+                document.getElementById('opp2').innerHTML = ''
+                document.getElementById('opp3').innerHTML = ''
+            }
+            document.getElementById('hnd1').innerHTML = player.deck[0][0]
+            document.getElementById('hnd2').innerHTML = player.deck[1][0]
+            document.getElementById('hnd3').innerHTML = player.deck[2][0]
+            setTimeout(clearboard,1000)
+        }
+        function clearboard(){
+            document.getElementById(cardId).style.visibility = 'visible'
+            document.getElementById('hndPlayed').style.visibility = 'hidden'
+            document.getElementById('notouch').style.visibility = 'hidden'
+        }
+        var cardId = 'hnd1'
+        function cardSelect(dex){
+            pilenum = dex
+            chosencard = deck[dex][0]
+            switch (dex){
+                case 0:
+                    cardId = 'hnd1'
+                    break
+                case 1:
+                    cardId = 'hnd2'
+                    break
+                case 2:
+                    cardId = 'hnd3'
+                    break
+            }
+            document.getElementById(cardId).style.visibility = 'hidden'
+            document.getElementById('hndPlayed').innerHTML = chosencard
+            document.getElementById('hndPlayed').style.visibility = 'visible'
+            document.getElementById('notouch').style.visibility = 'visible'
+        }
+
+    </script>
+    <div id="gameWindow">
+        <progress value="0" max="25" id="opponentHealth"></progress>
+        <progress value="0" max="25" id="playerHealth"></progress>
+        <button id="opp1" class="card"></button>
+        <button id="opp2" class="card"></button>
+        <button id="opp3" class="card"></button>
+        <button id="hnd1" class="card" onclick="cardSelect(0)"></button>
+        <button id="hnd2" class="card" onclick="cardSelect(1)"></button>
+        <button id="hnd3" class="card" onclick="cardSelect(2)"></button>
+
+        <button id="hndPlayed" class="card"></button>
+        <button id="oppPlayed" class="card"></button>
+    </div>
+    <div id="notouch"></div>
+    <button onclick="gameSearch()" id="searchBtn">Search for Game</button>
+</body>
+</html>

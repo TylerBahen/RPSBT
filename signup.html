@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+</head>
+<body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io()
+
+        function register(){
+            var username = document.getElementById('username').value
+            var password = document.getElementById('password').value
+            socket.emit('register',username,password,(success,id)=>{
+                if (success) {
+                    window.location.replace('/play?user='+String(id))
+                }else{
+                    alert('That username is already taken. Please try another one.')
+                }
+            })
+        }
+    </script>
+    <input type="text" id="username" placeholder="Username">
+    <br>
+    <input type="password" id="password" placeholder="Password">
+    <br>
+    <button onclick="register()">Sign Up</button>
+</body>
+</html>

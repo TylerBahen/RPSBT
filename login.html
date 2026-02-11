@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In</title>
+</head>
+<body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io()
+
+        function login(){
+            var username = document.getElementById('username').value
+            var password = document.getElementById('password').value
+            socket.emit('login',username,password,(success,id)=>{
+                if (success) {
+                    window.location.replace('/play?user='+String(id))
+                }else{
+                    alert('Your username and password either do not match, or are not registered. Please try again.')
+                }
+            })
+        }
+    </script>
+    <input type="text" id="username" placeholder="Username">
+    <br>
+    <input type="password" id="password" placeholder="Password">
+    <br>
+    <button onclick="login()">Log In</button>
+</body>
+</html>

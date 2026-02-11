@@ -1,0 +1,183 @@
+<html>
+  <head>
+    <link rel="icon" type="image/x-icon" href="/globe.png">
+    <title id='tabTitle'>RPS:BT</title>
+    <style>
+      body {
+        overflow: hidden;
+        background-image: url('/globe.png');
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-position: center;
+        animation-fill-mode: both;
+      }
+      button {
+        position:absolute;
+        width:8em;
+        height:2em;
+        background-color: CornflowerBlue;
+        border-color: MediumBlue;
+        text-align:center;
+        animation-name:flyUp;
+        animation-duration:2s;
+        animation-fill-mode: both;
+      }
+      button:hover {
+        background-color: white;
+        border-style:groove;
+      }
+      #play {
+        animation-delay: 3s;
+        left:1em;
+      }
+      #about {
+        animation-delay: 3.5s;
+        left:10em;
+      }
+      #help {
+        animation-delay: 4s;
+        left: 19em;
+      }
+      #flyout {
+        animation-name:flyOut;
+        animation-fill-mode: both;
+        animation-duration:2s;
+        animation-delay:0s;
+      }
+      #fadeout {
+        text-align:center;
+        position:absolute;
+        bottom:50%;
+        margin-bottom:0px;
+        padding-bottom:0px;
+        animation-name:fade;
+        animation-duration:2s;
+        animation-delay:0s;
+        animation-fill-mode: both;
+      }
+      #hidden {
+        visibility:none;
+      }
+      #column {
+        background: cornflowerblue;
+        opacity:0.3;
+        position:absolute;
+        left:0%;
+        animation-name:slice;
+        animation-duration: 0.5s;
+        animation-delay:1.5s;
+        animation-fill-mode:both;
+      }
+      #sliceout {
+        background: cornflowerblue;
+        opacity:0.3;
+        position:absolute;
+        left:0%;
+        animation-name:sliceOut;
+        animation-duration: 0.5s;
+        animation-delay:1.5s;
+        animation-fill-mode:both;
+      }
+      #title {
+        text-align:center;
+        position:absolute;
+        bottom:50%;
+        margin-bottom:0px;
+        padding-bottom:0px;
+        animation-name: emerge;
+        animation-duration: 2s;
+        animation-delay: 2s;
+        animation-fill-mode: both;
+      }
+      @keyframes emerge {
+        from {opacity:0;}
+        to {opacity: 1;}
+      }
+      @keyframes fade {
+        from {opacity:1;}
+        to {opacity:0;}
+      }
+      @keyframes flyUp {
+        from {
+          position:absolute;
+          top:100%;
+        }
+        to {
+          position:absolute;
+          top:50%;
+        }
+      }
+      @keyframes flyOut {
+        from {
+          position:absolute;
+          top:50%;
+        }
+        to {
+          position:absolute;
+          top:100%;
+        }
+      }
+      @keyframes slice{
+        from{
+          bottom:100%;
+          top:0%;
+        }
+        to{
+          top:0%;
+          bottom:0%;
+        }
+      }
+      @keyframes sliceOut{
+        from{
+          bottom:0%;
+          top:0%;
+        }
+        to{
+          top:0%;
+          bottom:100%;
+        }
+      }
+    </style>
+  </head>
+  <body onload='load()'>
+    <script>
+      function load(){
+        document.getElementById('tabTitle').innerHTML = 'RPS: Beyond the Triad'
+      }
+      function play(){
+        flyOut()
+        setTimeout(start,2000)
+      }
+      function flyOut(){
+        document.getElementById('title').id = 'fadeout'
+        document.getElementById('play').id = 'flyout'
+        document.getElementById('about').id = 'flyout'
+        document.getElementById('help').id = 'flyout'
+        document.getElementById('column').id = 'sliceout'
+      }
+      function start(){
+        window.location.href = '/login'
+      }
+      function account(){
+        flyOut()
+        setTimeout(signup,2000)
+      }
+      function signup(){
+        window.location.href = '/signup'
+      }
+
+      window.addEventListener('pageshow', function(event) {
+      if (event.persisted) {
+        window.location.href = window.location.href
+      }
+      });
+    </script>
+    <div id='column'>
+      <h1 style='opacity:0;'>Welcome to RPS: Beyond the Triad!...</h1>
+    </div>
+    <h1 id='title'>Welcome to RPS: Beyond the Triad!</h1>
+    <button id='play' style='left:1em;' onclick='play()'>Login</button>
+    <button id='about' style='left:10em;' onclick='account()'>New Game</button>
+    <button id='help' style='left:19em;' onclick='help()'>Help</button>
+  </body>
+</html>
