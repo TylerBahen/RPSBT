@@ -201,9 +201,11 @@ function runGames(){
       }
       if(player1.hp<=0){
         io.to(player2.id).emit('victory','normal')
+        io.to(player1.id).emit('defeat','normal')
         var winner = playersockets.get(player2.id)
       }else if(player2.hp<=0){
         io.to(player1.id).emit('victory','normal')
+        io.to(player2.id).emit('defeat','normal')
         var winner = playersockets.get(player1.id)
       } else {
         player1.deck[player1.cardnum].push(player1.deck[player1.cardnum].shift())

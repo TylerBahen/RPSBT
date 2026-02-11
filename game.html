@@ -102,7 +102,7 @@
         socket.emit('auth',quer['user'],(authenticated,playerData,cardLib) => {
             if(authenticated){
                 console.log('Player Authenticated')
-                //history.replaceState(null, '',window.location.pathname);
+                history.replaceState(null, '',window.location.pathname);
                 var data = JSON.parse(playerData)
                 console.log(data)
                 deck = data.deck
@@ -128,7 +128,7 @@
         }
         socket.on('gamestart',(player,opponent)=> {
             alert('Match started with '+JSON.parse(opponent).name)
-            document.getElementById('gameWindow').style.visibility = 'visible'
+            openboard()
             update(JSON.parse(player),JSON.parse(opponent))
         })
         socket.on('moved',(player,opponent) => {
@@ -152,6 +152,15 @@
                     alert('Your opponent forfeit!')
                     break
             }
+            setTimeout(closeboard,1100)
+        })
+        socket.on('defeat',(reason) => {
+            switch (reason){
+                case 'normal':
+                    alert('You Lose.')
+                    break
+            }
+            setTimeout(closeboard,1100)
         })
         function update(player,opponent){
             chosencard = undefined
@@ -177,6 +186,23 @@
             document.getElementById(cardId).style.visibility = 'visible'
             document.getElementById('hndPlayed').style.visibility = 'hidden'
             document.getElementById('notouch').style.visibility = 'hidden'
+        }
+        function closeboard(){
+            document.getElementById('searchBtn').disabled = false
+            document.getElementById('gameWindow').style.visibility = 'hidden'
+            document.getElementById('notouch').style.visibility = 'hidden'
+            let cardslots = ['hnd1','hnd2','hnd3','hndPlayed','opp1','opp2','opp3','oppPlayed']
+            cardslots.forEach((slot => {
+                document.getElementById(slot).style.visibility = 'hidden'
+            }))
+        }
+        function openboard(){
+            document.getElementById('gameWindow').style.visibility = 'visible'
+            document.getElementById('notouch').style.visibility = 'hidden'
+            let cardslots = ['hnd1','hnd2','hnd3','opp1','opp2','opp3']
+            cardslots.forEach((slot => {
+                document.getElementById(slot).style.visibility = 'visible'
+            }))
         }
         var cardId = 'hnd1'
         function cardSelect(dex){
