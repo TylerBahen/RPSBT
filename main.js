@@ -47,10 +47,10 @@ var rooms = []
 var playersockets = new Map()
 var searching = []
 const startingGoods = {deck:[
-  ['Rock','Rock','Rock','Rock','Rock','Rock','Rock','Rock'],
-  ['Paper','Paper','Paper','Paper','Paper','Paper','Paper','Paper'],
-  ['Scissors','Scissors','Scissors','Scissors','Scissors','Scissors','Scissors','Scissors']
-],'cards':[],'gold':0}
+  ['Rock','Rock','Rock','Rock','Rock','Rock'],
+  ['Paper','Paper','Paper','Paper','Paper','Paper'],
+  ['Scissors','Scissors','Scissors','Scissors','Scissors','Scissors']
+],'cards':[],'gold':900}
 //Handling Connections and Events
 io.on('connection',function(client){
   client.emit('ioconnect')
@@ -81,32 +81,19 @@ io.on('connection',function(client){
   client.on('register',function(username,password,callback){
     var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
     var taken = false
-    dbdata.users.forEach(user => {
-      if(user.username == username){
-        taken = true
-      }
-    });
-    if (taken){
+    if(username in dbdata){
       callback(false,undefined)
     } else {
       callback(true,encrypt(username))
-      dbdata.users.push({"username":username,"password":password,"userdata":startingGoods})
+      dbdata[username] = {"username":username,"password":password,"userdata":startingGoods}
       fs.writeFileSync('users.txt',JSON.stringify(dbdata))
     }
   })
   client.on('login',function(username,password,callback){
     var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
-    var matched = false
-    for (user of dbdata.users) {
-      if(user.username == username){
-        if(user.password == password){
-          matched = true
-          console.log('User logged in.')
-        }
-      }
-    }
-    if (matched){
+    if (username in dbdata && dbdata[username].password==password){
       callback(true,encrypt(username))
+      console.log('User logged in.')
     } else {
       callback(false,undefined)
       console.log('Log in failed.')
@@ -114,19 +101,15 @@ io.on('connection',function(client){
   })
   client.on('auth',function(id,callback){
     var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
-    var found = false
-    for (user of dbdata.users) {
-      if(user.username == decrypt(id)){
-        found = true
-        callback(true,JSON.stringify(user.userdata),JSON.stringify(cards))
-        console.log('User Authenticated: '+user.username)
-        client.username = user.username
-        client.userdata = user.userdata
-        playersockets.set(client.id,client)
-        break
-      }
-    }
-    if(!found){
+    var username = decrypt(id)
+    if(username in dbdata){
+      var user = dbdata[username]
+      callback(true,JSON.stringify(user.userdata),JSON.stringify(cards))
+      console.log('User Authenticated: '+user.username)
+      client.username = user.username
+      client.userdata = user.userdata
+      playersockets.set(client.id,client)
+    } else {
       callback(false,undefined)
       console.log('Attempted User Authentication Failed.')
     }
@@ -149,12 +132,14 @@ function tickSec(){
   if (searching.length >= 2){
     var player1 = searching.splice(Math.floor(Math.random()*searching.length),1)[0]
     var player2 = searching.splice(Math.floor(Math.random()*searching.length),1)[0]
-    if(player1.id!==player2.id){
+    if(player1.name!==player2.name){
       //Start Game
       player1.card = undefined
       player2.card = undefined
       player1.hp = 25
       player2.hp = 25
+      player1.message = 'Opponent Found'
+      player2.message = 'Opponent Found'
       rooms.push({'player1':player1,'player2':player2})
       console.log("Match Found!")
       console.log(player1.name+' vs. '+player2.name)
@@ -191,15 +176,25 @@ function runGames(){
     }
     if(player1.card!=undefined && player2.card!=undefined){
       //Run Round
+      player1.message = 'It is a tie!'
+      player2.message = 'It is a tie!'
       if(cards[player1.card].win.includes(player2.card)){
         player2.hp-=5
-        console.log(`${player1.card} beats ${player2.card}`)
+        player1.message = `${player1.card} beats ${player2.card}`
+        player2.message = `${player1.card} beats ${player2.card}`
       }
       if(cards[player2.card].win.includes(player1.card)){
         player1.hp-=5
-        console.log(`${player2.card} beats ${player1.card}`)
+        player1.message = `${player2.card} beats ${player1.card}`
+        player2.message = `${player2.card} beats ${player1.card}`
       }
-      if(player1.hp<=0){
+      [player1,player2] = cards[player1.card].sfx(player1,player2)
+      [player2,player1] = cards[player2.card].sfx(player2,player1)
+      if(player1.hp<=0 && player2.hp<=0){
+        io.to(player1.id).emit('defeat','tie')
+        io.to(player2.id).emit('defeat','tie')
+        winner = null
+      } else if(player1.hp<=0){
         io.to(player2.id).emit('victory','normal')
         io.to(player1.id).emit('defeat','normal')
         var winner = playersockets.get(player2.id)
@@ -216,16 +211,17 @@ function runGames(){
       player1.card = undefined
       player2.card = undefined
     }
-    if(player1.hp>=0 && player2.hp>=0){
+    if(player1.hp>0 && player2.hp>0){
       rooms[roomdex].player1 = player1
       rooms[roomdex].player2 = player2
       roomdex++
     }else{
-      console.log('Got here!')
-      
-      winner.userdata.gold+=100
-      save(winner.username,winner.userdata)
       rooms.splice(roomdex,1)
+      console.log('Got here!')
+      if(winner!=null){
+        winner.userdata.gold+=100
+        save(winner.username,winner.userdata)
+      }
     }
   })
   setTimeout(runGames,3000)
@@ -250,21 +246,17 @@ var cards = {
   'Ace of Spades':{'desc':'The death card. Only loses to rock, paper, or scissors.','win':['Ice','Magnet','Rope'],'lose':['Rock','Paper','Scissors'],'sfx':noFX},
   'Ice':{'desc':'Ice is pretty tough, until it melts or gets smashed.','win':['Scissors','Paper'],'lose':['Rock'],'sfx':noFX},
   'Magnet':{'desc':'Magnets are super cool! Too bad they only work on metal.','win':['Rock','Scissors'],'lose':['Paper'],'sfx':noFX},
-  'Rope':{'desc':'Rope is handy and flexible, as long as it doesn\'t get cut.','win':['Rock','Paper'],'lose':['Scissors'],'sfx':noFX}
+  'Rope':{'desc':'Rope is handy and flexible, as long as it doesn\'t get cut.','win':['Rock','Paper'],'lose':['Scissors'],'sfx':noFX},
+  'Flashlight':{'desc':'Flashlights help you see things that are hard to see. Using it shows your opponent\'s hand.','win':[],'lose':[],'sfx':function(ap,nap){ap.message+='<br>With your flashlight, you see your opponent\'s hand!'; ap.message+=`<br>Currently they have:<br>${nap.deck[0][0]}<br>${nap.deck[1][0]}<br>${nap.deck[2][0]}`; nap.message+='<br>Your opponent saw your hand!'; return [ap,nap]}},
+  'Eye':{'desc':'The eye grants you vision and allows you to see your opponent\'s hand for the rest of the game.','win':[],'lose':[],'sfx':function(ap,nap){ap.vision = true; ap.message+='<br>The eye grants you vision.'; return [ap,nap]}}
 }
 
 //Manage Save Data
 function save(username,userdata){
   var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
-  var users = dbdata.users
-  for (i in dbdata) {
-    if(dbdata[i].username==username){
-      dbdata[i].userdata = userdata
-      fs.writeFileSync('users.txt',JSON.stringify(dbdata))
-      console.log('Data Saved')
-      break
-    }
-  }
+  dbdata[username].userdata = userdata
+  fs.writeFileSync('users.txt',JSON.stringify(dbdata))
+  console.log('Saved userdata for: '+username)
 }
 
 //Start The Server

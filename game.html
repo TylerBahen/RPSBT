@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
     <style>
+        body {
+            padding:0px;
+            margin:0px;
+        }
         #gameWindow {
             width:80%;
             height:80%;
@@ -80,6 +84,28 @@
             opacity: 0;
             visibility: hidden;
         }
+        #popup {
+            pointer-events: none;
+            user-select: none;
+            position: fixed;
+            top: 20%;
+            left:50%;
+            transform: translate(-50%, -20%);
+            visibility: hidden;
+            color: #300000;
+            text-align: center;
+            background:none;
+            text-shadow: 1px 1px 3px #222;
+        }
+        nav {
+            display: flex;
+            margin:0px;
+            padding:0px;
+            width:100%;
+            height:50px;
+            background-color: gray;
+            border-bottom: 7px ridge lightgray;
+        }
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -102,7 +128,7 @@
         socket.emit('auth',quer['user'],(authenticated,playerData,cardLib) => {
             if(authenticated){
                 console.log('Player Authenticated')
-                history.replaceState(null, '',window.location.pathname);
+                //history.replaceState(null, '',window.location.pathname);
                 var data = JSON.parse(playerData)
                 console.log(data)
                 deck = data.deck
@@ -125,9 +151,10 @@
         function gameSearch(){
             socket.emit('searching',deck)
             document.getElementById('searchBtn').disabled = true
+            popup('Searching for opponent...')
         }
         socket.on('gamestart',(player,opponent)=> {
-            alert('Match started with '+JSON.parse(opponent).name)
+            popup('Match started with '+JSON.parse(opponent).name)
             openboard()
             update(JSON.parse(player),JSON.parse(opponent))
         })
@@ -143,13 +170,13 @@
         socket.on('victory',(reason) => {
             switch (reason){
                 case 'normal':
-                    alert('You win!')
+                    popup('You win!')
                     break
                 case 'disconnect':
-                    alert('Your opponent disconnected and forfeit!')
+                    popup('Your opponent disconnected and forfeit!')
                     break
                 case 'forfeit':
-                    alert('Your opponent forfeit!')
+                    popup('Your opponent forfeit!')
                     break
             }
             setTimeout(closeboard,1100)
@@ -157,15 +184,18 @@
         socket.on('defeat',(reason) => {
             switch (reason){
                 case 'normal':
-                    alert('You Lose.')
+                    popup('You Lose.')
+                    break
+                case 'tie':
+                    popup('It was a tie.')
                     break
             }
             setTimeout(closeboard,1100)
         })
+        var oppId = 'oppPlayed'
         function update(player,opponent){
             chosencard = undefined
             deck = player.deck
-
             document.getElementById('playerHealth').value = String(player.hp)
             document.getElementById('opponentHealth').value = String(opponent.hp)
             if (player.vision == true){
@@ -180,11 +210,32 @@
             document.getElementById('hnd1').innerHTML = player.deck[0][0]
             document.getElementById('hnd2').innerHTML = player.deck[1][0]
             document.getElementById('hnd3').innerHTML = player.deck[2][0]
-            setTimeout(clearboard,1000)
+            switch (opponent.cardnum){
+                case 0:
+                    oppId = 'opp1'
+                    break
+                case 1:
+                    oppId = 'opp2'
+                    break
+                case 2:
+                    oppId = 'opp3'
+                    break
+            }
+            document.getElementById(oppId).style.visibility = 'hidden'
+            document.getElementById('oppPlayed').innerHTML = opponent.card
+            if (opponent.card==undefined){
+                //do nothing
+            } else {
+                popup(player.message)
+                document.getElementById('oppPlayed').style.visibility = 'visible'
+            }
+            setTimeout(clearboard,2000)
         }
         function clearboard(){
             document.getElementById(cardId).style.visibility = 'visible'
+            document.getElementById(oppId).style.visibility = 'visible'
             document.getElementById('hndPlayed').style.visibility = 'hidden'
+            document.getElementById('oppPlayed').style.visibility = 'hidden'
             document.getElementById('notouch').style.visibility = 'hidden'
         }
         function closeboard(){
@@ -203,6 +254,21 @@
             cardslots.forEach((slot => {
                 document.getElementById(slot).style.visibility = 'visible'
             }))
+        }
+        var popups = 0
+        function popup(text){
+            popups++
+            var popuptab = document.getElementById('popup')
+            popuptab.innerHTML = text
+            popuptab.style.visibility = 'visible'
+            setTimeout(unpop,(text.length*100)+1000)
+        }
+        function unpop(){
+            popups--
+            if(popups<=0){
+                popups = 0
+                document.getElementById('popup').style.visibility = 'hidden'
+            }
         }
         var cardId = 'hnd1'
         function cardSelect(dex){
@@ -223,9 +289,13 @@
             document.getElementById('hndPlayed').innerHTML = chosencard
             document.getElementById('hndPlayed').style.visibility = 'visible'
             document.getElementById('notouch').style.visibility = 'visible'
+            popup('Waiting for opponent\'s move...')
         }
 
     </script>
+    <nav>
+        <button onclick="gameSearch()" id="searchBtn">Search for Game</button>
+    </nav>
     <div id="gameWindow">
         <progress value="0" max="25" id="opponentHealth"></progress>
         <progress value="0" max="25" id="playerHealth"></progress>
@@ -240,6 +310,6 @@
         <button id="oppPlayed" class="card"></button>
     </div>
     <div id="notouch"></div>
-    <button onclick="gameSearch()" id="searchBtn">Search for Game</button>
+    <h1 id="popup"></h1>
 </body>
 </html>
