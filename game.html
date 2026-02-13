@@ -9,7 +9,8 @@
         #gameWindow {
             width:80%;
             height:80%;
-            border: solid black 3px;
+            border: ridge gray 5px;
+            background-color: white;
             position: fixed;
             top: 50%;
             left: 50%;
@@ -99,12 +100,123 @@
         }
         nav {
             display: flex;
+            flex-wrap: wrap;
             margin:0px;
             padding:0px;
             width:100%;
             height:50px;
             background-color: gray;
             border-bottom: 7px ridge lightgray;
+        }
+        nav button {
+            height:50px;
+            flex: 1 1 20%;
+            min-width: 300px;
+        }
+
+        #shopWindow {
+            width:80%;
+            height:80%;
+            border: solid black 3px;
+            background-color: white;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            grid-template-rows: 150px 30px 1fr 1fr;
+            place-items: center;
+            visibility: hidden;
+        }
+        #shopTitle {
+            grid-column: 1 / span 3;
+            text-align: center;
+            align-content: bottom;
+        }
+        #goldDisplay {
+            grid-column: 1 / span 3;
+            text-align: center;
+            align-content: top;
+        }
+        #commonPack {
+            height: 100%;
+            width:100%;
+            align-items: center;
+            text-align: center;
+        }
+        .close {
+            cursor: pointer;
+            position: absolute;
+            top: 0%;
+            right: 0%;
+            display:block;
+            color:red;
+            border-style:outset;
+        }
+
+        .close:hover {
+            background: #bbb;
+            color:white;
+            border-style:inset;
+        }
+        #deckWindow {
+            width:80%;
+            height:80%;
+            border: solid black 3px;
+            background-color: white;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            grid-template-rows: auto 20px 2fr 1fr;
+            place-items: center;
+            visibility: hidden;
+        }
+        #deckTitle {
+            grid-column: 1 / span 3;
+            text-align: center;
+        }
+        .pileLabel {
+            text-align: center;
+        }
+        #pile0 {
+            border: solid black 3px;
+            overflow:auto;
+            width:80%;
+            height:90%;
+        }
+        #pile1 {
+            border: solid black 3px;
+            overflow:auto;
+            width:80%;
+            height:90%;
+        }
+        #pile2 {
+            border: solid black 3px;
+            overflow:auto;
+            width:80%;
+            height:90%;
+        }
+        #cardPicker {
+            grid-column: 1 / span 3;
+            width: 80%;
+            height:80%;
+            text-align: center;
+            align-content: center;
+            border: solid black 3px;
+            overflow: auto;
+        }
+        .cardBtn {
+            width:100%;
+            height:16.666%;
+        }
+        .shopBtn {
+            width:200px;
+            max-width:80%;
+            height:95%;
         }
     </style>
     <meta charset="UTF-8">
@@ -133,11 +245,15 @@
                 console.log(data)
                 deck = data.deck
                 gold = data.gold
-                cards = data.cards
+                bank = data.cards
                 cardData = JSON.parse(cardLib)
             } else {
                 window.location.replace('/')
             }
+        })
+        socket.on('reauth',() => {
+            alert('Your window has expired and needs to be re-authenticated. You are being moved to the login screen...')
+            window.location.replace('/login')
         })
 
         
@@ -150,7 +266,7 @@
 
         function gameSearch(){
             socket.emit('searching',deck)
-            document.getElementById('searchBtn').disabled = true
+            disableBtns()
             popup('Searching for opponent...')
         }
         socket.on('gamestart',(player,opponent)=> {
@@ -208,8 +324,11 @@
                 document.getElementById('opp3').innerHTML = ''
             }
             document.getElementById('hnd1').innerHTML = player.deck[0][0]
+            document.getElementById('hnd1').title = cardData[player.deck[0][0]].desc
             document.getElementById('hnd2').innerHTML = player.deck[1][0]
+            document.getElementById('hnd2').title = cardData[player.deck[1][0]].desc
             document.getElementById('hnd3').innerHTML = player.deck[2][0]
+            document.getElementById('hnd3').title = cardData[player.deck[2][0]].desc
             switch (opponent.cardnum){
                 case 0:
                     oppId = 'opp1'
@@ -239,21 +358,21 @@
             document.getElementById('notouch').style.visibility = 'hidden'
         }
         function closeboard(){
-            document.getElementById('searchBtn').disabled = false
+            enableBtns()
             document.getElementById('gameWindow').style.visibility = 'hidden'
             document.getElementById('notouch').style.visibility = 'hidden'
             let cardslots = ['hnd1','hnd2','hnd3','hndPlayed','opp1','opp2','opp3','oppPlayed']
-            cardslots.forEach((slot => {
+            cardslots.forEach((slot) => {
                 document.getElementById(slot).style.visibility = 'hidden'
-            }))
+            })
         }
         function openboard(){
             document.getElementById('gameWindow').style.visibility = 'visible'
             document.getElementById('notouch').style.visibility = 'hidden'
             let cardslots = ['hnd1','hnd2','hnd3','opp1','opp2','opp3']
-            cardslots.forEach((slot => {
+            cardslots.forEach((slot) => {
                 document.getElementById(slot).style.visibility = 'visible'
-            }))
+            })
         }
         var popups = 0
         function popup(text){
@@ -270,6 +389,9 @@
                 document.getElementById('popup').style.visibility = 'hidden'
             }
         }
+        socket.on('msg',(message) => {
+            popup(message)
+        })
         var cardId = 'hnd1'
         function cardSelect(dex){
             pilenum = dex
@@ -291,10 +413,85 @@
             document.getElementById('notouch').style.visibility = 'visible'
             popup('Waiting for opponent\'s move...')
         }
+        function enableBtns(){
+            document.getElementById('searchBtn').disabled = false
+            document.getElementById('shopBtn').disabled = false
+            document.getElementById('deckBtn').disabled = false
+        }
+        function disableBtns(){
+            document.getElementById('searchBtn').disabled = true
+            document.getElementById('shopBtn').disabled = true
+            document.getElementById('deckBtn').disabled = true
+        }
 
+        function openShop(){
+            updateGold()
+            disableBtns()
+            document.getElementById('shopWindow').style.visibility = 'visible'
+        }
+        function closeShop(){
+            enableBtns()
+            document.getElementById('shopWindow').style.visibility = 'hidden'
+        }
+        function purchase(item){
+            socket.emit('purchase',item,function(pulls){
+                var msg = 'You pulled:'
+                pulls.forEach((card) => {
+                    msg+=`<br>${card}`
+                })
+                popup(msg)
+                bank.push(...pulls)
+            })
+            updateGold()
+        }
+        function updateGold(){
+            socket.emit('balance',(balance) => {
+                gold = balance
+                document.getElementById('goldDisplay').innerHTML = `Gold: ${gold}`
+            })
+        }
+
+        function openDeck(){
+            disableBtns()
+            document.getElementById('deckWindow').style.visibility = 'visible'
+            renderDeck()
+        }
+        function closeDeck(){
+            enableBtns()
+            document.getElementById('deckWindow').style.visibility = 'hidden'
+            document.getElementById('cardPicker').innerHTML = '<b>Click on a card to replace it.</b>'
+            socket.emit('save',deck,bank)
+        }
+        function renderDeck(){
+            for (let j = 0; j < 3; j++){
+                var div = document.getElementById(`pile${j}`)
+                div.innerHTML = ''
+                for (let i = 0; i < deck[j].length; i++){
+                    div.innerHTML+=`<button class="cardBtn" onclick="editCard(${j},${i})">${deck[j][i]}</button>`
+                }
+            }
+        }
+        function editCard(j,i){
+            var div = document.getElementById('cardPicker')
+            div.innerHTML = '<b>Your Cards:</b><br>'
+            for (let x = 0; x < bank.length; x++){
+                div.innerHTML+=`<button class="cardBtn" onclick="replaceCard(${j},${i},${x})">${bank[x]}</button>`
+            }
+        }
+        var deckChanges = false
+        function replaceCard(j,i,x){
+            bank.push(deck[j].splice(i,1,bank.splice(x,1)[0])[0])
+            document.getElementById('cardPicker').innerHTML = '<b>Click on a card to replace it.</b>'
+            deckChanges = true
+            renderDeck()
+            socket.emit('deckChange',deck,bank)
+        }
     </script>
     <nav>
         <button onclick="gameSearch()" id="searchBtn">Search for Game</button>
+        <button onclick="openDeck()" id="deckBtn">Deck Editor</button>
+        <button onclick="openShop()" id="shopBtn">Shop</button>
+        <button>...</button>
     </nav>
     <div id="gameWindow">
         <progress value="0" max="25" id="opponentHealth"></progress>
@@ -305,9 +502,25 @@
         <button id="hnd1" class="card" onclick="cardSelect(0)"></button>
         <button id="hnd2" class="card" onclick="cardSelect(1)"></button>
         <button id="hnd3" class="card" onclick="cardSelect(2)"></button>
-
         <button id="hndPlayed" class="card"></button>
         <button id="oppPlayed" class="card"></button>
+    </div>
+    <div id='shopWindow'>
+        <button class="close" onclick="closeShop()">X</button>
+        <h1 id="shopTitle">Shop</h1>
+        <h3 id="goldDisplay">Gold: 1000</h3>
+        <button class="shopBtn" onclick="purchase('commonpack')">Common Pack<br><br><br></button>
+    </div>
+    <div id='deckWindow'>
+        <button class="close" onclick="closeDeck()">X</button>
+        <h1 id="deckTitle">Deck Editor</h1>
+        <b class="pileLabel">Pile 1</b>
+        <b class="pileLabel">Pile 2</b>
+        <b class="pileLabel">Pile 3</b>
+        <div id="pile0"></div>
+        <div id="pile1"></div>
+        <div id="pile2"></div>
+        <div id="cardPicker"><b>Click on a card to replace it.</b></div>
     </div>
     <div id="notouch"></div>
     <h1 id="popup"></h1>

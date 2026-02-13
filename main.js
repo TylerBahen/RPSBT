@@ -50,7 +50,7 @@ const startingGoods = {deck:[
   ['Rock','Rock','Rock','Rock','Rock','Rock'],
   ['Paper','Paper','Paper','Paper','Paper','Paper'],
   ['Scissors','Scissors','Scissors','Scissors','Scissors','Scissors']
-],'cards':[],'gold':900}
+],'cards':[],'gold':1900}
 //Handling Connections and Events
 io.on('connection',function(client){
   client.emit('ioconnect')
@@ -62,20 +62,29 @@ io.on('connection',function(client){
         io.to(game.player2.id).emit('victory','forfeit')
         rooms.splice(i,1)
         console.log(`${client.username} disconnected, so ${game.player2.name} wins!`)
+        var winner = playersockets.get(game.player2.id)
+        winner.userdata.gold+=100
+        save(winner.username,winner.userdata)
         break
       }
       if (client.id == game.player2.id){
         io.to(game.player1.id).emit('victory','forfeit')
         rooms.splice(i,1)
         console.log(`${client.username} disconnected, so ${game.player1.name} wins!`)
+        var winner = playersockets.get(game.player1.id)
+        winner.userdata.gold+=100
+        save(winner.username,winner.userdata)
         break
       }
     }
     i = 0
     for (waiting of searching) {
       if(waiting.id == client.id){
-        console.log('Loser Left')
+        console.log('Player Left Matchmaking')
+        searching.splice(i,1)
+        break
       }
+      i++
     }
   })
   client.on('register',function(username,password,callback){
@@ -122,8 +131,37 @@ io.on('connection',function(client){
     })
     searching.push({'id':client.id,'name':client.username,'deck':shuffled})
   })
-  client.on('save',() => {
-
+  client.on('save',(deck,bank) => {
+    if(client.userdata!=undefined){
+      save(client.username,{"deck":deck,"cards":bank,"gold":client.userdata.gold})
+    }else{
+      client.emit('reauth')
+    }
+  })
+  client.on('purchase',(purchase,callback) => {
+    if(client.userdata==undefined){
+      client.emit('reauth')
+    }else{
+      switch(purchase){
+        case 'commonpack':
+          if(client.userdata.gold>=1000){
+            var pulls = ['Flashlight']
+            client.userdata.cards.push(...pulls)
+            client.userdata.gold-=1000
+            save(client.username,client.userdata)
+            callback(pulls)
+          } else {
+            client.emit('msg','Not enough gold!')
+          }
+      }
+    }
+  })
+  client.on('balance',(callback) => {
+    if(client.userdata==undefined){
+      client.emit('reauth')
+    } else {
+      callback(client.userdata.gold)
+    }
   })
 })
 
@@ -178,6 +216,8 @@ function runGames(){
       //Run Round
       player1.message = 'It is a tie!'
       player2.message = 'It is a tie!'
+      console.log(player1.card)
+      console.log(player2.card)
       if(cards[player1.card].win.includes(player2.card)){
         player2.hp-=5
         player1.message = `${player1.card} beats ${player2.card}`
@@ -188,8 +228,15 @@ function runGames(){
         player1.message = `${player2.card} beats ${player1.card}`
         player2.message = `${player2.card} beats ${player1.card}`
       }
-      [player1,player2] = cards[player1.card].sfx(player1,player2)
-      [player2,player1] = cards[player2.card].sfx(player2,player1)
+      //[player1,player2] = cards[player1.card].sfx(player1,player2)
+      //[player2,player1] = cards[player2.card].sfx(player2,player1)
+      const [p1a, p2a] = cards[player1.card].sfx(player1, player2)
+      player1 = p1a
+      player2 = p2a
+
+      const [p2b, p1b] = cards[player2.card].sfx(player2, player1)
+      player2 = p2b
+      player1 = p1b
       if(player1.hp<=0 && player2.hp<=0){
         io.to(player1.id).emit('defeat','tie')
         io.to(player2.id).emit('defeat','tie')
@@ -217,7 +264,6 @@ function runGames(){
       roomdex++
     }else{
       rooms.splice(roomdex,1)
-      console.log('Got here!')
       if(winner!=null){
         winner.userdata.gold+=100
         save(winner.username,winner.userdata)
@@ -250,13 +296,25 @@ var cards = {
   'Flashlight':{'desc':'Flashlights help you see things that are hard to see. Using it shows your opponent\'s hand.','win':[],'lose':[],'sfx':function(ap,nap){ap.message+='<br>With your flashlight, you see your opponent\'s hand!'; ap.message+=`<br>Currently they have:<br>${nap.deck[0][0]}<br>${nap.deck[1][0]}<br>${nap.deck[2][0]}`; nap.message+='<br>Your opponent saw your hand!'; return [ap,nap]}},
   'Eye':{'desc':'The eye grants you vision and allows you to see your opponent\'s hand for the rest of the game.','win':[],'lose':[],'sfx':function(ap,nap){ap.vision = true; ap.message+='<br>The eye grants you vision.'; return [ap,nap]}}
 }
+var junks = [
+  'Rock','Rock','Rock','Rock','Rock',
+  'Paper','Paper','Paper','Paper','Paper',
+  'Scissors','Scissors','Scissors','Scissors','Scissors',
+  'Ice','Magnet','Rope'
+]
+var commons = [
+  'Ice',
+  'Magnet',
+  'Rope',
+  'Flashlight'
+]
 
 //Manage Save Data
 function save(username,userdata){
   var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
   dbdata[username].userdata = userdata
   fs.writeFileSync('users.txt',JSON.stringify(dbdata))
-  console.log('Saved userdata for: '+username)
+  console.log('Saved userdata for '+username)
 }
 
 //Start The Server
@@ -264,5 +322,6 @@ server.listen(3000)
 console.log(new Date(Date.now()).toString())
 var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
 console.log(JSON.stringify(dbdata))
+dbdata = null
 tickSec()
 runGames()
