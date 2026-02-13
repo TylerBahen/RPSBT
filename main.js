@@ -224,8 +224,6 @@ function runGames(){
       //Run Round
       player1.message = 'It is a tie!'
       player2.message = 'It is a tie!'
-      console.log(player1.card)
-      console.log(player2.card)
       if(cards[player1.card].win.includes(player2.card)){
         player2.hp-=5
         player1.message = `${player1.card} beats ${player2.card}`
