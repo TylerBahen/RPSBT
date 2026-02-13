@@ -255,6 +255,10 @@
             alert('Your window has expired and needs to be re-authenticated. You are being moved to the login screen...')
             window.location.replace('/login')
         })
+        function logout(){
+            socket.disconnect()
+            window.location.replace('/')
+        }
 
         
         //Game Stuff
@@ -417,11 +421,13 @@
             document.getElementById('searchBtn').disabled = false
             document.getElementById('shopBtn').disabled = false
             document.getElementById('deckBtn').disabled = false
+            document.getElementById('logoutBtn').disabled = false
         }
         function disableBtns(){
             document.getElementById('searchBtn').disabled = true
             document.getElementById('shopBtn').disabled = true
             document.getElementById('deckBtn').disabled = true
+            document.getElementById('logoutBtn').disabled = true
         }
 
         function openShop(){
@@ -491,7 +497,7 @@
         <button onclick="gameSearch()" id="searchBtn">Search for Game</button>
         <button onclick="openDeck()" id="deckBtn">Deck Editor</button>
         <button onclick="openShop()" id="shopBtn">Shop</button>
-        <button>...</button>
+        <button onclick="logout()" id="logoutBtn">Log Out</button>
     </nav>
     <div id="gameWindow">
         <progress value="0" max="25" id="opponentHealth"></progress>

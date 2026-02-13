@@ -124,12 +124,16 @@ io.on('connection',function(client){
     }
   })
   client.on('searching',function(deck){
-    console.log(client.username+' is searching for a match.')
-    var shuffled = []
-    deck.forEach((stack) => {
-      shuffled.push(shuffle(stack))
-    })
-    searching.push({'id':client.id,'name':client.username,'deck':shuffled})
+    if(client.userdata==undefined){
+      client.emit('reauth')
+    } else {
+      console.log(client.username+' is searching for a match.')
+      var shuffled = []
+      deck.forEach((stack) => {
+        shuffled.push(shuffle(stack))
+      })
+      searching.push({'id':client.id,'name':client.username,'deck':shuffled})
+    }
   })
   client.on('save',(deck,bank) => {
     if(client.userdata!=undefined){
@@ -145,7 +149,11 @@ io.on('connection',function(client){
       switch(purchase){
         case 'commonpack':
           if(client.userdata.gold>=1000){
-            var pulls = ['Flashlight']
+            var pulls = [
+              randomFrom(commons),
+              randomFrom(commons),
+              randomFrom(commons)
+            ]
             client.userdata.cards.push(...pulls)
             client.userdata.gold-=1000
             save(client.username,client.userdata)
@@ -296,6 +304,9 @@ var cards = {
   'Flashlight':{'desc':'Flashlights help you see things that are hard to see. Using it shows your opponent\'s hand.','win':[],'lose':[],'sfx':function(ap,nap){ap.message+='<br>With your flashlight, you see your opponent\'s hand!'; ap.message+=`<br>Currently they have:<br>${nap.deck[0][0]}<br>${nap.deck[1][0]}<br>${nap.deck[2][0]}`; nap.message+='<br>Your opponent saw your hand!'; return [ap,nap]}},
   'Eye':{'desc':'The eye grants you vision and allows you to see your opponent\'s hand for the rest of the game.','win':[],'lose':[],'sfx':function(ap,nap){ap.vision = true; ap.message+='<br>The eye grants you vision.'; return [ap,nap]}}
 }
+function randomFrom(list){
+  return list[Math.floor(Math.random()*list.length)]
+}
 var junks = [
   'Rock','Rock','Rock','Rock','Rock',
   'Paper','Paper','Paper','Paper','Paper',
@@ -307,6 +318,9 @@ var commons = [
   'Magnet',
   'Rope',
   'Flashlight'
+]
+var uncommons = [
+
 ]
 
 //Manage Save Data
