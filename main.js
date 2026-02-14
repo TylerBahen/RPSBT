@@ -7,12 +7,52 @@ const fetch = require('node-fetch');
 const fs = require('fs');
 const { json } = require('stream/consumers');
 
-import { createClient } from '@supabase/supabase-js'
+const { createClient } = require('@supabase/supabase-js')
+
 
 const supabaseUrl = 'https://mmpaphmwjcrunggplqbk.supabase.co'
 const supabaseKey = 'sb_publishable_kuhDVNZK1UIrhjxsZ-8org_I1J3dLRv'
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+async function saveObject(id, json) {
+  const { data, error } = await supabase
+    .from('objects')
+    .upsert({ id, data: json })
+
+  if (error) throw error
+  return data
+}
+async function loadObject(id) {
+  const { data, error } = await supabase
+    .from('objects')
+    .select('data')
+    .eq('id', id)
+    .maybeSingle()   // <— important
+
+  if (error) throw error
+  return data ? data.data : null
+}
+async function deleteObject(id) {
+  const { error } = await supabase
+    .from('objects')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+const db = {
+  async get(id) {
+    return await loadObject(id)
+  },
+  async set(id, json) {
+    return await saveObject(id, json)
+  },
+  async delete(id) {
+    return await deleteObject(id)
+  }
+}
+
 
 const encrypt = (text) => {
   return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text));
@@ -95,40 +135,42 @@ io.on('connection',function(client){
     }
   })
   client.on('register',function(username,password,callback){
-    var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
-    var taken = false
-    if(username in dbdata){
+    db.get(username).then((dbuser) => {
+    if(dbuser!=null){
       callback(false,undefined)
     } else {
       callback(true,encrypt(username))
-      dbdata[username] = {"username":username,"password":password,"userdata":startingGoods}
-      fs.writeFileSync('users.txt',JSON.stringify(dbdata))
+      db.set(username,{"username":username,"password":password,"userdata":startingGoods})
+      console.log('Created new user: '+username)
     }
+    })
   })
   client.on('login',function(username,password,callback){
-    var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
-    if (username in dbdata && dbdata[username].password==password){
-      callback(true,encrypt(username))
-      console.log('User logged in.')
-    } else {
-      callback(false,undefined)
-      console.log('Log in failed.')
-    }
+    db.get(username).then((dbuser) => {
+      console.log(dbuser.password)
+      if (dbuser.password==password){
+        callback(true,encrypt(username))
+        console.log('User logged in.')
+      } else {
+        callback(false,undefined)
+        console.log('Log in failed.')
+      }
+    })
   })
   client.on('auth',function(id,callback){
-    var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
     var username = decrypt(id)
-    if(username in dbdata){
-      var user = dbdata[username]
-      callback(true,JSON.stringify(user.userdata),JSON.stringify(cards))
-      console.log('User Authenticated: '+user.username)
-      client.username = user.username
-      client.userdata = user.userdata
-      playersockets.set(client.id,client)
+    db.get(username).then((dbuser) => {
+      if(dbuser!=null){
+        callback(true,JSON.stringify(dbuser.userdata),JSON.stringify(cards))
+        console.log('User Authenticated: '+dbuser.username)
+        client.username = dbuser.username
+        client.userdata = dbuser.userdata
+        playersockets.set(client.id,client)
     } else {
       callback(false,undefined)
       console.log('Attempted User Authentication Failed.')
     }
+    })
   })
   client.on('searching',function(deck){
     if(client.userdata==undefined){
@@ -330,17 +372,12 @@ var rares = [
 
 //Manage Save Data
 function save(username,userdata){
-  var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
-  dbdata[username].userdata = userdata
-  fs.writeFileSync('users.txt',JSON.stringify(dbdata))
+  db.set(username,userdata)
   console.log('Saved userdata for '+username)
 }
 
 //Start The Server
 server.listen(3000)
 console.log(new Date(Date.now()).toString())
-var dbdata = JSON.parse(fs.readFileSync('users.txt','utf8'))
-console.log(JSON.stringify(dbdata))
-dbdata = null
 tickSec()
 runGames()
