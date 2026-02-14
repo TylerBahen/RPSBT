@@ -1,1 +1,1 @@
-{}
+{"BigTimeTyler":{"username":"BigTimeTyler","password":"deez","userdata":{"deck":[["Rock","Rock","Rock","Rock","Rock","Rock"],["Paper","Paper","Paper","Paper","Paper","Paper"],["Scissors","Scissors","Scissors","Scissors","Scissors","Scissors"]],"cards":["Flashlight","Rope","Ice"],"gold":900}}}

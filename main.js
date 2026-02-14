@@ -7,6 +7,13 @@ const fetch = require('node-fetch');
 const fs = require('fs');
 const { json } = require('stream/consumers');
 
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = 'https://mmpaphmwjcrunggplqbk.supabase.co'
+const supabaseKey = 'sb_publishable_kuhDVNZK1UIrhjxsZ-8org_I1J3dLRv'
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
+
 const encrypt = (text) => {
   return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text));
 };
@@ -317,8 +324,8 @@ var commons = [
   'Rope',
   'Flashlight'
 ]
-var uncommons = [
-
+var rares = [
+  
 ]
 
 //Manage Save Data
