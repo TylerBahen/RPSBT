@@ -204,12 +204,19 @@ io.on('connection',function(client){
               randomFrom(commons)
             ]
             client.userdata.cards.push(...pulls)
-            client.userdata.gold-=1000
+            client.userdata.gold-=500
             save(client.username,client.userdata)
             callback(pulls)
           } else {
             client.emit('msg','Not enough gold!')
           }
+          break
+        case 'rarepack':
+          client.emit('msg','This feature is not yet available.')
+          break
+        case 'epicpack':
+          client.emit('msg','This feature is not yet available.')
+          break
       }
     }
   })
