@@ -240,7 +240,7 @@
         socket.emit('auth',quer['user'],(authenticated,playerData,cardLib) => {
             if(authenticated){
                 console.log('Player Authenticated')
-                //history.replaceState(null, '',window.location.pathname);
+                history.replaceState(null, '',window.location.pathname);
                 var data = JSON.parse(playerData)
                 console.log(data)
                 deck = data.deck

@@ -147,7 +147,6 @@ io.on('connection',function(client){
   })
   client.on('login',function(username,password,callback){
     db.get(username).then((dbuser) => {
-      console.log(dbuser.password)
       if (dbuser.password==password){
         callback(true,encrypt(username))
         console.log('User logged in.')
@@ -379,8 +378,12 @@ var rares = [
 
 //Manage Save Data
 function save(username,userdata){
-  db.set(username,userdata)
-  console.log('Saved userdata for '+username)
+  db.get(username).then((user) => {
+    var savedata = user
+    savedata.userdata = userdata
+    db.set(username,savedata)
+    console.log('Saved userdata for '+username)
+  })
 }
 
 //Start The Server
