@@ -211,7 +211,20 @@ io.on('connection',function(client){
           }
           break
         case 'rarepack':
-          client.emit('msg','This feature is not yet available.')
+          client.emit('msg','Rare Packs Are Coming Soon!')
+          /*if(client.userdata.gold>=1000){
+            var pulls = [
+              randomFrom(rares),
+              randomFrom(commons),
+              randomFrom(commons)
+            ]
+            client.userdata.cards.push(...pulls)
+            client.userdata.gold-=1000
+            save(client.username,client.userdata)
+            callback(pulls)
+          } else {
+            client.emit('msg','Not enough gold!')
+          }*/
           break
         case 'epicpack':
           client.emit('msg','This feature is not yet available.')
@@ -347,13 +360,16 @@ function noFX(ap,nap){
 }
 //Card Data
 var cards = {
-  'Rock':{'desc':'One of the original three. Beats scissors and loses to paper.','win':['Scissors','Ace of Spades','Ice'],'lose':['Paper'],'sfx':noFX},
-  'Paper':{'desc':'One of the original three. Beats rock and looses to scissors.','win':['Rock','Ace of Spades','Magnet'],'lose':['Scissors'],'sfx':noFX},
-  'Scissors':{'desc':'One of the original three. Beats paper and loses to rock','win':['Paper','Ace of Spades','Rope'],'lose':['Rock'],'sfx':noFX},
-  'Ace of Spades':{'desc':'The death card. Only loses to rock, paper, or scissors.','win':['Ice','Magnet','Rope'],'lose':['Rock','Paper','Scissors'],'sfx':noFX},
+  'Rock':{'desc':'One of the original three. Beats scissors and loses to paper.','win':['Scissors','Ace of Spades','Ice','Fabric'],'lose':['Paper'],'sfx':noFX},
+  'Paper':{'desc':'One of the original three. Beats rock and looses to scissors.','win':['Rock','Ace of Spades','Magnet','Boulder'],'lose':['Scissors'],'sfx':noFX},
+  'Scissors':{'desc':'One of the original three. Beats paper and loses to rock','win':['Paper','Ace of Spades','Rope','Knife'],'lose':['Rock'],'sfx':noFX},
+  'Ace of Spades':{'desc':'The death card. Only loses to rock, paper, or scissors.','win':['Ice','Magnet','Rope','Boulder','Fabric','Knife'],'lose':['Rock','Paper','Scissors'],'sfx':noFX},
   'Ice':{'desc':'Ice is pretty tough, until it melts or gets smashed.','win':['Scissors','Paper'],'lose':['Rock'],'sfx':noFX},
   'Magnet':{'desc':'Magnets are super cool! Too bad they only work on metal.','win':['Rock','Scissors'],'lose':['Paper'],'sfx':noFX},
   'Rope':{'desc':'Rope is handy and flexible, as long as it doesn\'t get cut.','win':['Rock','Paper'],'lose':['Scissors'],'sfx':noFX},
+  'Boulder':{'desc':'Boulders are just bigger, stronger, and tougher rocks.','win':['Rock','Scissors','Knife','Ice','Rope'],'sfx':noFX},
+  'Fabric':{'desc':'Fabric is just softer, warmer, and more flexible paper.','win':['Paper','Rock','Boulder','Magnet','Ice'],'sfx':noFX},
+  'Knife':{'desc':'Knives are just sharper, harder, and more versatile scissors.','win':['Scissors','Paper','Fabric','Rope','Magnet'],'sfx':noFX},
   'Flashlight':{'desc':'Flashlights help you see things that are hard to see. Using it shows your opponent\'s hand.','win':[],'lose':[],'sfx':function(ap,nap){ap.message+='<br>With your flashlight, you see your opponent\'s hand!'; ap.message+=`<br>Currently they have:<br>${nap.deck[0][0]}<br>${nap.deck[1][0]}<br>${nap.deck[2][0]}`; nap.message+='<br>Your opponent saw your hand!'; return [ap,nap]}},
   'Eye':{'desc':'The eye grants you vision and allows you to see your opponent\'s hand for the rest of the game.','win':[],'lose':[],'sfx':function(ap,nap){ap.vision = true; ap.message+='<br>The eye grants you vision.'; return [ap,nap]}}
 }
@@ -367,13 +383,23 @@ var junks = [
   'Ice','Magnet','Rope'
 ]
 var commons = [
-  'Ice',
-  'Magnet',
-  'Rope',
-  'Flashlight'
+  'Ice','Ice','Ice',
+  'Magnet','Magnet','Magnet',
+  'Rope','Rope','Rope',
+  'Flashlight','Flashlight','Flashlight',
+  'Boulder',
+  'Fabric',
+  'Knife',
+  'Eye'
 ]
 var rares = [
-  
+  'Boulder',
+  'Fabric',
+  'Knife',
+  'Eye'
+]
+var epics = [
+
 ]
 
 //Manage Save Data
