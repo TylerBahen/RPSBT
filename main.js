@@ -196,7 +196,7 @@ io.on('connection',function(client){
     }else{
       switch(purchase){
         case 'commonpack':
-          if(client.userdata.gold>=1000){
+          if(client.userdata.gold>=500){
             var pulls = [
               randomFrom(commons),
               randomFrom(commons),
