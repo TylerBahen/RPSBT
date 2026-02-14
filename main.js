@@ -97,7 +97,7 @@ const startingGoods = {deck:[
   ['Rock','Rock','Rock','Rock','Rock','Rock'],
   ['Paper','Paper','Paper','Paper','Paper','Paper'],
   ['Scissors','Scissors','Scissors','Scissors','Scissors','Scissors']
-],'cards':[],'gold':1900}
+],'cards':[],'gold':900}
 //Handling Connections and Events
 io.on('connection',function(client){
   client.emit('ioconnect')
