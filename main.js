@@ -139,7 +139,7 @@ io.on('connection',function(client){
     if(dbuser!=null){
       callback(false,undefined)
     } else {
-      callback(true,encrypt(username))
+      callback(true,encrypt(username),encrypt(password))
       db.set(username,{"username":username,"password":password,"userdata":startingGoods})
       console.log('Created new user: '+username)
     }
@@ -148,7 +148,7 @@ io.on('connection',function(client){
   client.on('login',function(username,password,callback){
     db.get(username).then((dbuser) => {
       if (dbuser.password==password){
-        callback(true,encrypt(username))
+        callback(true,encrypt(username),encrypt(password))
         console.log('User logged in.')
       } else {
         callback(false,undefined)
@@ -156,10 +156,15 @@ io.on('connection',function(client){
       }
     })
   })
-  client.on('auth',function(id,callback){
-    var username = decrypt(id)
+  client.on('auth',function(uid,pid,callback){
+    try {
+    var username = decrypt(uid)
+    var password = decrypt(pid)
+    } catch (e){
+      console.log(e)
+    }
     db.get(username).then((dbuser) => {
-      if(dbuser!=null){
+      if(dbuser!=null&&dbuser.password==password){
         callback(true,JSON.stringify(dbuser.userdata),JSON.stringify(cards))
         console.log('User Authenticated: '+dbuser.username)
         client.username = dbuser.username
@@ -383,10 +388,10 @@ var junks = [
   'Ice','Magnet','Rope'
 ]
 var commons = [
-  'Ice','Ice','Ice',
-  'Magnet','Magnet','Magnet',
-  'Rope','Rope','Rope',
-  'Flashlight','Flashlight','Flashlight',
+  'Ice','Ice','Ice','Ice','Ice','Ice',
+  'Magnet','Magnet','Magnet','Magnet','Magnet','Magnet',
+  'Rope','Rope','Rope','Rope','Rope','Rope',
+  'Flashlight','Flashlight','Flashlight','Flashlight','Flashlight','Flashlight',
   'Boulder',
   'Fabric',
   'Knife',

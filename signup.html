@@ -28,9 +28,9 @@
         function register(){
             var username = document.getElementById('username').value
             var password = document.getElementById('password').value
-            socket.emit('register',username,password,(success,id)=>{
+            socket.emit('register',username,password,(success,uid,pid)=>{
                 if (success) {
-                    setTimeout(redirect,3000,id)
+                    setTimeout(redirect,3000,uid,pid)
                     document.getElementById('registerBtn').disabled = true
                     var popUp = document.getElementById('alert')
                     popUp.innerHTML = 'Thank You!<br>Please wait while we get you registered...'
@@ -40,8 +40,8 @@
                 }
             })
         }
-        function redirect(id){
-            window.location.replace('/play?user='+String(id))
+        function redirect(uid,pid){
+            window.location.replace('/play?user='+String(uid)+'&pass='+String(pid))
         }
     </script>
     <input type="text" id="username" placeholder="Username">
