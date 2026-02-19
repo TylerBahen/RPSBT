@@ -375,7 +375,7 @@ var cards = {
   'Boulder':{'desc':'Boulders are just bigger, stronger, and tougher rocks.','win':['Rock','Scissors','Knife','Ice','Rope'],'sfx':noFX},
   'Fabric':{'desc':'Fabric is just softer, warmer, and more flexible paper.','win':['Paper','Rock','Boulder','Magnet','Ice'],'sfx':noFX},
   'Knife':{'desc':'Knives are just sharper, harder, and more versatile scissors.','win':['Scissors','Paper','Fabric','Rope','Magnet'],'sfx':noFX},
-  'Flashlight':{'desc':'Flashlights help you see things that are hard to see. Using it shows your opponent\'s hand.','win':[],'lose':[],'sfx':function(ap,nap){ap.message+='<br>With your flashlight, you see your opponent\'s hand!'; ap.message+=`<br>Currently they have:<br>${nap.deck[0][0]}<br>${nap.deck[1][0]}<br>${nap.deck[2][0]}`; nap.message+='<br>Your opponent saw your hand!'; return [ap,nap]}},
+  'Flashlight':{'desc':'Flashlights help you see things that are hard to see. Using it shows your opponent\'s hand.','win':[],'lose':[],'sfx':function(ap,nap){hand = []; hand.push(nap.deck[0][0]); hand.push(nap.deck[1][0]); hand.push(nap.deck[2][0]); hand[nap.cardnum]=nap.deck[nap.cardnum][1]; ap.message+='<br>With your flashlight, you see your opponent\'s hand!'; ap.message+=`<br>Currently they have:<br>${hand[0]}<br>${hand[1]}<br>${hand[2]}`; nap.message+='<br>Your opponent saw your hand!'; return [ap,nap]}},
   'Eye':{'desc':'The eye grants you vision and allows you to see your opponent\'s hand for the rest of the game.','win':[],'lose':[],'sfx':function(ap,nap){ap.vision = true; ap.message+='<br>The eye grants you vision.'; return [ap,nap]}}
 }
 function randomFrom(list){
