@@ -21,11 +21,18 @@
                 }
             })
         }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('submitBtn').click();
+            }
+        });
     </script>
     <input type="text" id="username" placeholder="Username">
     <br>
     <input type="password" id="password" placeholder="Password">
     <br>
-    <button onclick="login()">Log In</button>
+    <button onclick="login()" id="submitBtn">Log In</button>
 </body>
 </html>

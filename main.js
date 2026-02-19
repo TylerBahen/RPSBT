@@ -309,13 +309,20 @@ function runGames(){
       }
       //[player1,player2] = cards[player1.card].sfx(player1,player2)
       //[player2,player1] = cards[player2.card].sfx(player2,player1)
+      try {
       const [p1a, p2a] = cards[player1.card].sfx(player1, player2)
       player1 = p1a
       player2 = p2a
-
+      } catch {
+        io.to(player1.id).emit('reauth')
+      }
+      try {
       const [p2b, p1b] = cards[player2.card].sfx(player2, player1)
       player2 = p2b
       player1 = p1b
+      } catch {
+        io.to(player2.id).emit('reauth')
+      }
       if(player1.hp<=0 && player2.hp<=0){
         io.to(player1.id).emit('defeat','tie')
         io.to(player2.id).emit('defeat','tie')
@@ -388,23 +395,23 @@ var junks = [
   'Ice','Magnet','Rope'
 ]
 var commons = [
-  'Ice','Ice','Ice','Ice','Ice','Ice',
-  'Magnet','Magnet','Magnet','Magnet','Magnet','Magnet',
-  'Rope','Rope','Rope','Rope','Rope','Rope',
-  'Flashlight','Flashlight','Flashlight','Flashlight','Flashlight','Flashlight',
+  'Ice','Ice','Ice','Ice','Ice','Ice','Ice','Ice','Ice','Ice',
+  'Magnet','Magnet','Magnet','Magnet','Magnet','Magnet','Magnet','Magnet','Magnet','Magnet',
+  'Rope','Rope','Rope','Rope','Rope','Rope','Rope','Rope','Rope','Rope',
+  'Flashlight','Flashlight','Flashlight','Flashlight','Flashlight','Flashlight','Flashlight','Flashlight','Flashlight','Flashlight',
   'Boulder',
   'Fabric',
   'Knife',
   'Eye'
 ]
 var rares = [
-  'Boulder',
-  'Fabric',
-  'Knife',
-  'Eye'
+  'Boulder','Boulder','Boulder',
+  'Fabric','Fabric','Fabric',
+  'Knife','Knife','Knife',
+  'Eye','Eye','Eye'
 ]
 var epics = [
-
+  'Ace of Spades'
 ]
 
 //Manage Save Data
